@@ -6,4 +6,5 @@
     <color name="estatus_atendidos">#88E072</color>
     <color name="estatus_proceso">#E0DF72</color>
     <color name="estatus_nuevos">#E15D4D</color>
+    <color name="danger">#2155DB</color>
 </resources>

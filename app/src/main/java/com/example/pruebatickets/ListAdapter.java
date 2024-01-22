@@ -17,6 +17,8 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
     private LayoutInflater mInflate;
     private Context context;
 
+    private OnClickListener onClickListener;
+
     public ListAdapter(List<Ticket> itemList, Context context) {
         this.mInflate = LayoutInflater.from(context);
         this.mData = itemList;
@@ -34,7 +36,25 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
 
     @Override
     public void onBindViewHolder(final ListAdapter.ViewHolder holder, final int position) {
+        Ticket item = mData.get(position);
         holder.bindData(mData.get(position));
+
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (onClickListener != null) {
+                    onClickListener.onClick(position, item);
+                }
+            }
+        });
+    }
+
+    public void setOnClickListener(OnClickListener onClickListener) {
+        this.onClickListener = onClickListener;
+    }
+
+    public interface OnClickListener {
+        void onClick(int position, Ticket model);
     }
 
     public void setItem(List<Ticket> items) {mData = items;}

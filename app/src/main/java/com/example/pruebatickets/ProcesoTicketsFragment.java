@@ -2,63 +2,132 @@ package com.example.pruebatickets;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link ProcesoTicketsFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import com.example.pruebatickets.databinding.DialogDetalleTicketBinding;
+import com.example.pruebatickets.databinding.FragmentProcesoTicketsBinding;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class ProcesoTicketsFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private FragmentProcesoTicketsBinding binding;
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private FirebaseFirestore db;
+    private ListAdapter listAdapter;
 
-    public ProcesoTicketsFragment() {
-        // Required empty public constructor
-    }
+    private DialogDetalleTicketBinding detalleTicketBinding;
+    private AlertDialog alertDialog;
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment ProcesoTicketsFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static ProcesoTicketsFragment newInstance(String param1, String param2) {
-        ProcesoTicketsFragment fragment = new ProcesoTicketsFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-    }
+    private static final String TAG = ProcesoTicketsFragment.class.getName();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_proceso_tickets, container, false);
+        binding = FragmentProcesoTicketsBinding.inflate(inflater, container, false);
+
+        detalleTicketBinding = DialogDetalleTicketBinding.inflate(LayoutInflater.from(requireContext()));
+        alertDialog = new MaterialAlertDialogBuilder(requireContext()).setView(detalleTicketBinding.getRoot()).create();
+
+
+        return binding.getRoot();
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        db = FirebaseFirestore.getInstance();
+
+        db.collection("tickets").addSnapshotListener(new EventListener<QuerySnapshot>() {
+            @Override
+            public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
+                if (error != null) {
+                    Log.w(TAG, "Listen failed.", error);
+                    return;
+                }
+
+                List<Ticket> tickets = new ArrayList<>();
+                for (QueryDocumentSnapshot doc : value) {
+                    if (doc.get("tituloTicket") != null) {
+                        if (Integer.parseInt( doc.get("estatus").toString()) == Utils.ESTATUS_EN_PROCESO) {
+                            tickets.add(doc.toObject(Ticket.class));
+                            listAdapter = new ListAdapter(tickets, requireContext());
+                            binding.recyclerView.setHasFixedSize(true);
+                            binding.recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+                            binding.recyclerView.setAdapter(listAdapter);
+                        }
+                    }
+                }
+                acciones(value);
+            }
+        });
+
+    }
+
+    private void acciones(QuerySnapshot value) {
+
+        if (listAdapter != null) {
+            listAdapter.setOnClickListener(new ListAdapter.OnClickListener() {
+                @Override
+                public void onClick(int position, Ticket model) {
+                    detalleTicketBinding.idTicket.setText(model.getIdTicket());
+                    detalleTicketBinding.tituloTicket.setText(model.getTituloTicket());
+                    detalleTicketBinding.fechaCreacionTicket.setText(model.getFechaCreacion());
+                    detalleTicketBinding.nombreResponsableTicket.setText(model.getNombreResponsable());
+                    detalleTicketBinding.equipoResponsableTicket.setText(model.getEquipoResponsable());
+                    detalleTicketBinding.tipoIncidenciaTicket.setText(model.getTipoIncidencia());
+                    detalleTicketBinding.gravedadTicket.setText(model.getGravedad());
+                    detalleTicketBinding.versionSoftwareTicket.setText(model.getVersionSoftware());
+                    detalleTicketBinding.descripcionTicket.setText(model.getDescripcion());
+
+                    detalleTicketBinding.btnCambiarEstado.setVisibility(View.VISIBLE);
+                    detalleTicketBinding.btnCambiarEstado.setText("Cambiar a en proceso");
+                    detalleTicketBinding.btnCambiarEstado.setOnClickListener(v -> {
+
+                        DocumentReference documentReference = db.collection("tickets").document(value.getDocuments().get(position).getId());
+                        documentReference
+                                .update("estatus", Utils.ESTATUS_ATENDIDOS)
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void unused) {
+                                        Toast.makeText(requireContext(), "Se cambio a proceso", Toast.LENGTH_SHORT).show();
+                                        alertDialog.dismiss();
+                                    }
+                                })
+                                .addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Toast.makeText(requireContext(), "No se pudo actulizar el estado", Toast.LENGTH_SHORT).show();
+                                        Log.e(TAG, "onFailure: ", e);
+                                        alertDialog.dismiss();
+                                    }
+                                });
+                    });
+
+                    alertDialog.show();
+                }
+            });
+        }
     }
 }

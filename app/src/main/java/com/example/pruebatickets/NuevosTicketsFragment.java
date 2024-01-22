@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
@@ -12,8 +13,15 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
+import com.example.pruebatickets.databinding.DialogDetalleTicketBinding;
 import com.example.pruebatickets.databinding.FragmentNuevosTicketsBinding;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
@@ -26,6 +34,11 @@ import java.util.List;
 public class NuevosTicketsFragment extends Fragment {
 
     private FragmentNuevosTicketsBinding binding;
+    private DialogDetalleTicketBinding detalleTicketBinding;
+    private AlertDialog alertDialog;
+
+    private FirebaseFirestore db;
+    private ListAdapter listAdapter;
     private static final String TAG = NuevosTicketsFragment.class.getName();
 
     @Override
@@ -34,6 +47,9 @@ public class NuevosTicketsFragment extends Fragment {
 
         binding = FragmentNuevosTicketsBinding.inflate(inflater, container, false);
 
+        detalleTicketBinding = DialogDetalleTicketBinding.inflate(LayoutInflater.from(requireContext()));
+        alertDialog = new MaterialAlertDialogBuilder(requireContext()).setView(detalleTicketBinding.getRoot()).create();
+
         return binding.getRoot();
     }
 
@@ -41,7 +57,7 @@ public class NuevosTicketsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         db.collection("tickets").addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
@@ -56,13 +72,14 @@ public class NuevosTicketsFragment extends Fragment {
                     if (doc.get("tituloTicket") != null) {
                         if (Integer.parseInt( doc.get("estatus").toString()) == Utils.ESTATUS_NUEVOS) {
                             tickets.add(doc.toObject(Ticket.class));
-                            ListAdapter listAdapter = new ListAdapter(tickets, requireContext());
+                            listAdapter = new ListAdapter(tickets, requireContext());
                             binding.recyclerView.setHasFixedSize(true);
                             binding.recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
                             binding.recyclerView.setAdapter(listAdapter);
                         }
                     }
                 }
+                acciones(value);
             }
         });
 
@@ -72,5 +89,51 @@ public class NuevosTicketsFragment extends Fragment {
             startActivity(intent);
         });
 
+    }
+
+    private void acciones(QuerySnapshot value) {
+
+        if (listAdapter != null) {
+            listAdapter.setOnClickListener(new ListAdapter.OnClickListener() {
+                @Override
+                public void onClick(int position, Ticket model) {
+                    detalleTicketBinding.idTicket.setText(model.getIdTicket());
+                    detalleTicketBinding.tituloTicket.setText(model.getTituloTicket());
+                    detalleTicketBinding.fechaCreacionTicket.setText(model.getFechaCreacion());
+                    detalleTicketBinding.nombreResponsableTicket.setText(model.getNombreResponsable());
+                    detalleTicketBinding.equipoResponsableTicket.setText(model.getEquipoResponsable());
+                    detalleTicketBinding.tipoIncidenciaTicket.setText(model.getTipoIncidencia());
+                    detalleTicketBinding.gravedadTicket.setText(model.getGravedad());
+                    detalleTicketBinding.versionSoftwareTicket.setText(model.getVersionSoftware());
+                    detalleTicketBinding.descripcionTicket.setText(model.getDescripcion());
+
+                    detalleTicketBinding.btnCambiarEstado.setVisibility(View.VISIBLE);
+                    detalleTicketBinding.btnCambiarEstado.setText("Cambiar a en proceso");
+                    detalleTicketBinding.btnCambiarEstado.setOnClickListener(v -> {
+
+                        DocumentReference documentReference = db.collection("tickets").document(value.getDocuments().get(position).getId());
+                        documentReference
+                                .update("estatus", Utils.ESTATUS_EN_PROCESO)
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void unused) {
+                                        Toast.makeText(requireContext(), "Se cambio a proceso", Toast.LENGTH_SHORT).show();
+                                        alertDialog.dismiss();
+                                    }
+                                })
+                                .addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Toast.makeText(requireContext(), "No se pudo actulizar el estado", Toast.LENGTH_SHORT).show();
+                                        Log.e(TAG, "onFailure: ", e);
+                                        alertDialog.dismiss();
+                                    }
+                                });
+                    });
+
+                    alertDialog.show();
+                }
+            });
+        }
     }
 }
