@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "140776657387",
+    "project_id": "pruebatickets-a527a",
+    "storage_bucket": "pruebatickets-a527a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:140776657387:android:5288752b3d86d9537b49ae",
+        "android_client_info": {
+          "package_name": "com.example.pruebatickets"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_zveOM1V7Te9zPDUvAPItN8JT2R4UH_w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

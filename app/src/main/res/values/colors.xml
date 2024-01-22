@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="blue">#5062FB</color>
+    <color name="estatus_atendidos">#88E072</color>
+    <color name="estatus_proceso">#E0DF72</color>
+    <color name="estatus_nuevos">#E15D4D</color>
+</resources>

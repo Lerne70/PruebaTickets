@@ -1,0 +1,38 @@
+<resources>
+    <string name="app_name">PruebaTickets</string>
+    <string name="item_name_nuevos">Nuevos</string>
+    <string name="item_name_proceso">En procesos</string>
+    <string name="item_name_finalizado">Finalizados</string>
+    <string name="texto_ejemplo">TEXTO DE EJEMPLO</string>
+    <string name="requerido">*</string>
+    <string name="id_ticket">Identificador</string>
+    <string name="titulo_ticket">Título ticket *</string>
+    <string name="fecha_creacion">Fecha de creación</string>
+    <string name="nombre_responsable">Nombre del responsable *</string>
+    <string name="equipo_responsable">Equipo responsable</string>
+    <string name="tipo_incidencia">Tipo de incidencia *</string>
+    <string name="gravedad_incidencia">Gravedad de la incidencia *</string>
+    <string name="version_software">Versión del software</string>
+    <string name="descripcion">Descripción del problema *</string>
+    <string name="elegir_opcion">Seleccionar una opción</string>
+    <string-array name="equipos">
+        <item>Soporte</item>
+        <item>Desarrollo</item>
+        <item>Atención a clientes</item>
+    </string-array>
+    <string-array name="incidencias">
+        <item>Bug</item>
+        <item>Feature</item>
+    </string-array><string-array name="gravedad">
+        <item>High</item>
+        <item>Medium</item>
+        <item>Low</item>
+    </string-array>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="guardar">Guardar</string>
+    <string name="texto_error">Llenar campo</string>
+    <string name="nuevos_tickets_estatus">NUEVOS</string>
+    <string name="proceso_tickets_estatus">EN PROCESO</string>
+    <string name="atendidos_tickets_estatus">ATENDIDOS</string>
+</resources>
